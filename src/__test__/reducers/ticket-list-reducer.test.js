@@ -21,7 +21,7 @@ describe ('testListReducer', () => {
   };
 
   test('Should return default state if there is no action type passed into the reducer', () => {
-    expect(ticketListReducer({},{ type: null})).toEqual({});
+    expect(ticketListReducer({},{ type: null })).toEqual({});
   });
 
   test('Should successfully add new ticket data to mainTicketList', () => {
