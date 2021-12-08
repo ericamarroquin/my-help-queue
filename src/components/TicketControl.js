@@ -6,7 +6,7 @@ import EditTicketForm from "./EditTicketForm"
 import { connect } from 'react-redux';
 import PropTypes from "prop-types";
 import * as a from './../actions';
-import { withFirestore } from 'react-redux-firebase';
+import { withFirestore, isLoaded } from 'react-redux-firebase';
 
 class TicketControl extends React.Component {
 
@@ -87,31 +87,48 @@ class TicketControl extends React.Component {
   }
 
   render(){
-    let currentlyVisibleState = null;
-    let buttonText = null;
-
-    if (this.state.editing) {
-      currentlyVisibleState = <EditTicketForm ticket = {this.state.selectedTicket} />
-      buttonText = "Return to Ticket List";
-    } else if (this.state.selectedTicket != null) {
-      currentlyVisibleState = <TicketDetail ticket={this.state.selectedTicket} 
-                                            onClickingDelete={this.handleDeletingTicket}
-                                            onClickingEdit={this.handleEditClick} />
-      buttonText = "Return to Ticket List";
-    } else if (this.props.formVisibleOnPage) {
-      currentlyVisibleState = <NewTicketForm onNewTicketCreation={this.handleAddingNewTicketToList}/> //passes function into child as a prop
-      buttonText = "Return to Ticket List";
-    } else {
-      currentlyVisibleState = <TicketList ticketList={this.props.mainTicketList} 
-                                          onTicketSelection={this.handleChangingSelectedTicket} />
-      buttonText = "Add ticket";
+    const auth = this.props.firebase.auth();
+    if (!isLoaded(auth)) {
+      return (
+        <React.Fragment>
+          <h1>Loading...</h1>
+        </React.Fragment>
+      )
     }
-    return (
-      <React.Fragment>
-        {currentlyVisibleState}
-        <button onClick={this.handleClick}>{buttonText}</button>
-      </React.Fragment>
-    );
+    if ((isLoaded(auth)) && (auth.currentUser == null)) {
+      return (
+        <React.Fragment>
+          <h1>You must be signed in to access the queue.</h1>
+        </React.Fragment>
+      )
+    }
+    if ((isLoaded(auth)) && (auth.currentUser != null)) {
+      let currentlyVisibleState = null;
+      let buttonText = null;
+  
+      if (this.state.editing) {
+        currentlyVisibleState = <EditTicketForm ticket = {this.state.selectedTicket} />
+        buttonText = "Return to Ticket List";
+      } else if (this.state.selectedTicket != null) {
+        currentlyVisibleState = <TicketDetail ticket={this.state.selectedTicket} 
+                                              onClickingDelete={this.handleDeletingTicket}
+                                              onClickingEdit={this.handleEditClick} />
+        buttonText = "Return to Ticket List";
+      } else if (this.props.formVisibleOnPage) {
+        currentlyVisibleState = <NewTicketForm onNewTicketCreation={this.handleAddingNewTicketToList}/> //passes function into child as a prop
+        buttonText = "Return to Ticket List";
+      } else {
+        currentlyVisibleState = <TicketList ticketList={this.props.mainTicketList} 
+                                            onTicketSelection={this.handleChangingSelectedTicket} />
+        buttonText = "Add ticket";
+      }
+      return (
+        <React.Fragment>
+          {currentlyVisibleState}
+          <button onClick={this.handleClick}>{buttonText}</button>
+        </React.Fragment>
+      );
+    }
   }
 }
 
@@ -126,6 +143,6 @@ const mapStateToProps = state => { // making state accessible as props
   }
 }
 
-TicketControl = connect(mapStateToProps)(TicketControl); // connect() is a higher order component, that takes an existing component, wraps it with additional functionality, and then returns it
+TicketControl = connect(mapStateToProps)(TicketControl); // connect() is a higher order component (HOC), that takes an existing component, wraps it with additional functionality, and then returns it
 
-export default withFirestore(TicketControl); // adds Firestore to a components props
+export default withFirestore(TicketControl); // adds Firestore to a components props .. use this.props.firebase
